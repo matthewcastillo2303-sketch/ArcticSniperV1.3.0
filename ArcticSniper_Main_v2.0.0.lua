@@ -238,7 +238,7 @@ local ok, startupError = pcall(function()
     historyList=make("ScrollingFrame",{Position=UDim2.fromOffset(8,36),Size=UDim2.new(1,-16,1,-76),BackgroundColor3=panelColor,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=accent,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y},historyPanel)
     round(historyList,7); stroke(historyList,accent,1)
     make("UIListLayout",{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},historyList)
-    button(historyPanel,"CLEAR",UDim2.new(.48,-12,0,27),UDim2.fromOffset(8,historyPanel.AbsoluteSize.Y-34),function()
+    button(historyPanel,"CLEAR",UDim2.new(.48,-12,0,27),UDim2.new(0,8,1,-34),function()
         history={}; for _,child in ipairs(historyList:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
         historyCount.Text="0 ENTRIES"
     end,rowColor)
