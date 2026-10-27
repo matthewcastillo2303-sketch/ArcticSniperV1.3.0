@@ -185,7 +185,8 @@ local ok, startupError = pcall(function()
         round(row,7); stroke(row,accent,1)
         label(row,titleText,UDim2.new(1,-72,0,15),UDim2.fromOffset(8,3),8,white,false,Enum.Font.GothamSemibold)
         label(row,subtitle,UDim2.new(1,-72,0,11),UDim2.fromOffset(8,18),6,muted,false)
-        local b=button(row,"OFF",UDim2.fromOffset(45,22),UDim2.new(1,-51,0.5,-11),function()
+        local b
+        b=button(row,"OFF",UDim2.fromOffset(45,22),UDim2.new(1,-51,0.5,-11),function()
             local nextValue=not getter()
             setter(nextValue)
             b.Text=nextValue and "ON" or "OFF"
