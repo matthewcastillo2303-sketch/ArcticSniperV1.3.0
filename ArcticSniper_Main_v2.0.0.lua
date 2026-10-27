@@ -128,7 +128,8 @@ local function toggle(y,title,subtitle,key)
  round(row,6)
  label(row,title,UDim2.new(1,-80,0,16),UDim2.fromOffset(8,2),8,Color3.fromRGB(240,248,255),Enum.Font.GothamBold)
  label(row,subtitle,UDim2.new(1,-80,0,12),UDim2.fromOffset(8,19),6,P.muted)
- local b\n b=button(row,prefs[key] and "ON" or "OFF",UDim2.fromOffset(47,23),UDim2.new(1,-55,.5,-11),function()
+ local b
+ b=button(row,prefs[key] and "ON" or "OFF",UDim2.fromOffset(47,23),UDim2.new(1,-55,.5,-11),function()
   prefs[key]=not prefs[key]; b.Text=prefs[key] and "ON" or "OFF"; b.BackgroundColor3=prefs[key] and P.dark or P.bg
  end,prefs[key])
  b.BackgroundColor3=prefs[key] and P.dark or P.bg
