@@ -16,7 +16,11 @@ local ok, startupError = pcall(function()
 
     local themes = {
         BLUE = {accent=Color3.fromRGB(80,190,255), dark=Color3.fromRGB(20,79,117), row=Color3.fromRGB(16,29,43), muted=Color3.fromRGB(126,157,181)},
-        HALLOWEEN = {accent=Color3.fromRGB(255,137,43), dark=Color3.fromRGB(126,55,14), row=Color3.fromRGB(35,24,20), muted=Color3.fromRGB(190,151,122)}
+        HALLOWEEN = {accent=Color3.fromRGB(255,137,43), dark=Color3.fromRGB(126,55,14), row=Color3.fromRGB(35,24,20), muted=Color3.fromRGB(190,151,122)},
+        CHRISTMAS = {accent=Color3.fromRGB(70,220,125), dark=Color3.fromRGB(145,28,42), row=Color3.fromRGB(24,47,37), muted=Color3.fromRGB(155,205,170)},
+        THANKSGIVING = {accent=Color3.fromRGB(220,112,38), dark=Color3.fromRGB(111,57,25), row=Color3.fromRGB(43,31,24), muted=Color3.fromRGB(205,164,120)},
+        TACO = {accent=Color3.fromRGB(237,174,54), dark=Color3.fromRGB(139,76,28), row=Color3.fromRGB(48,37,22), muted=Color3.fromRGB(216,185,125)},
+        SATURDAY = {accent=Color3.fromRGB(255,92,180), dark=Color3.fromRGB(117,39,101), row=Color3.fromRGB(43,25,48), muted=Color3.fromRGB(215,157,208)}
     }
     local themeName = "BLUE"
     local accent, accentDark, rowColor, muted = themes.BLUE.accent, themes.BLUE.dark, themes.BLUE.row, themes.BLUE.muted
@@ -172,7 +176,40 @@ local ok, startupError = pcall(function()
         if value=="" then value="Manual preview entry" end
         addHistory("CODE / NOTE",value,"❄")
     end,accentDark)
-    label(home,"Choose a section on the left.",UDim2.new(1,0,0,30),UDim2.fromOffset(0,150),8,muted,false)
+    local spamEnabled = false
+    local scanEnabled = false
+    local scopeEnabled = false
+    local hideEnabled = false
+    local function previewToggle(y, titleText, subtitle, getter, setter)
+        local row = make("Frame",{Position=UDim2.fromOffset(0,y),Size=UDim2.new(1,0,0,34),BackgroundColor3=rowColor,BorderSizePixel=0},home)
+        round(row,7); stroke(row,accent,1)
+        label(row,titleText,UDim2.new(1,-72,0,15),UDim2.fromOffset(8,3),8,white,false,Enum.Font.GothamSemibold)
+        label(row,subtitle,UDim2.new(1,-72,0,11),UDim2.fromOffset(8,18),6,muted,false)
+        local b=button(row,"OFF",UDim2.fromOffset(45,22),UDim2.new(1,-51,0.5,-11),function()
+            local nextValue=not getter()
+            setter(nextValue)
+            b.Text=nextValue and "ON" or "OFF"
+            b.BackgroundColor3=nextValue and accentDark or rowColor
+        end,rowColor)
+        b.TextSize=8
+        return b
+    end
+    previewToggle(151,"SPAM REDEEM","UI preference only — not connected",function() return spamEnabled end,function(v) spamEnabled=v end)
+    previewToggle(189,"SCAN ANNOUNCEMENTS","Manual text preview only",function() return scanEnabled end,function(v) scanEnabled=v end)
+    previewToggle(227,"AUTO SCOPE","Visual preference only",function() return scopeEnabled end,function(v) scopeEnabled=v end)
+    previewToggle(265,"HIDE USER","Visual preference only",function() return hideEnabled end,function(v) hideEnabled=v end)
+    label(home,"AUTO SUBMIT PIECES",UDim2.new(1,0,0,16),UDim2.fromOffset(0,306),7,accent,false,Enum.Font.GothamBold)
+    local autoChoice=1
+    for i=1,5 do
+        local b=button(home,tostring(i),UDim2.new(.18,0,0,25),UDim2.new((i-1)*.2,0,0,326),function()
+            autoChoice=i
+            for _,child in ipairs(home:GetChildren()) do
+                if child:IsA("TextButton") and child.Name=="AutoPiece"..i then child.BackgroundColor3=accentDark end
+            end
+        end,i==1 and accentDark or rowColor)
+        b.Name="AutoPiece"..i
+        b.TextSize=9
+    end
 
     local tester = make("Frame",{Size=UDim2.fromScale(1,1),BackgroundColor3=bg,BorderSizePixel=0,Visible=false},content)
     panels.TESTER=tester
@@ -257,8 +294,10 @@ local ok, startupError = pcall(function()
         for _,obj in ipairs(gui:GetDescendants()) do
             if obj:IsA("UIStroke") then obj.Color=accent
             elseif obj:IsA("TextButton") then
-                if obj.Name=="ThemeBlue" then obj.BackgroundColor3=(name=="BLUE" and accentDark or rowColor)
-                elseif obj.Name=="ThemeHalloween" then obj.BackgroundColor3=(name=="HALLOWEEN" and accentDark or rowColor) end
+                if obj.Name:sub(1,5)=="Theme" then
+                    local themeKey=obj.Name:sub(6):upper()
+                    obj.BackgroundColor3=(themeKey==name and accentDark or rowColor)
+                end
             elseif obj:IsA("TextLabel") then
                 if obj.Text=="A" or obj.Text=="ARCTIC STATUS: READY" then obj.TextColor3=(obj.Text=="A" and accent or green)
                 elseif obj.Text=="FROST EDITION • v2.0.0" then obj.TextColor3=muted end
@@ -267,11 +306,18 @@ local ok, startupError = pcall(function()
         logo.BackgroundColor3=accentDark; logoLetter.TextColor3=accent
         mini.BackgroundColor3=accentDark
     end
-    local themeBlue=button(settings,"❄ BLUE",UDim2.new(1,-20,0,32),UDim2.fromOffset(10,60),function() applyTheme("BLUE") end,accentDark)
-    themeBlue.Name="ThemeBlue"
-    local themeHalloween=button(settings,"🎃 HALLOWEEN",UDim2.new(1,-20,0,32),UDim2.fromOffset(10,99),function() applyTheme("HALLOWEEN") end,rowColor)
-    themeHalloween.Name="ThemeHalloween"
-    label(settings,"The intro is decorative; the UI stays usable.",UDim2.new(1,-20,0,28),UDim2.fromOffset(10,142),7,muted,false)
+    local themeChoices={
+        {"BLUE","❄ BLUE",10,60},{"HALLOWEEN","🎃 HALLOWEEN",138,60},
+        {"CHRISTMAS","🎄 CHRISTMAS",10,99},{"THANKSGIVING","🦃 THANKSGIVING",138,99},
+        {"TACO","🌮 TACO RAIN",10,138},{"SATURDAY","🎉 ADMIN SATURDAY",138,138}
+    }
+    for _,choice in ipairs(themeChoices) do
+        local themeKey,labelText,x,y=choice[1],choice[2],choice[3],choice[4]
+        local b=button(settings,labelText,UDim2.new(0,119,0,32),UDim2.fromOffset(x,y),function() applyTheme(themeKey) end,themeKey==themeName and accentDark or rowColor)
+        b.Name="Theme"..themeKey
+        b.TextSize=8
+    end
+    label(settings,"Theme changes update the UI colors.",UDim2.new(1,-20,0,28),UDim2.fromOffset(10,181),7,muted,false)
 
     local feedbackOverlay=make("TextButton",{Name="FeedbackOverlay",Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(0,0,0),BackgroundTransparency=0.35,BorderSizePixel=0,Text="",Visible=false,AutoButtonColor=false,ZIndex=80},gui)
     local feedbackCard=make("Frame",{AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.new(.84,0,0,174),BackgroundColor3=panelColor,BorderSizePixel=0,ZIndex=81},feedbackOverlay)
