@@ -24,6 +24,7 @@ local theme = "BLUE"
 local P = palettes[theme]
 local prefs = {spam=false,scan=false,scope=false,hide=false,auto=5}
 local history = {}
+local refreshHistory
 local currentCode = ""
 local sequenceToken = 0
 local gui = Instance.new("ScreenGui")
@@ -127,7 +128,7 @@ local function toggle(y,title,subtitle,key)
  round(row,6)
  label(row,title,UDim2.new(1,-80,0,16),UDim2.fromOffset(8,2),8,Color3.fromRGB(240,248,255),Enum.Font.GothamBold)
  label(row,subtitle,UDim2.new(1,-80,0,12),UDim2.fromOffset(8,19),6,P.muted)
- local b=button(row,prefs[key] and "ON" or "OFF",UDim2.fromOffset(47,23),UDim2.new(1,-55,.5,-11),function()
+ local b\n b=button(row,prefs[key] and "ON" or "OFF",UDim2.fromOffset(47,23),UDim2.new(1,-55,.5,-11),function()
   prefs[key]=not prefs[key]; b.Text=prefs[key] and "ON" or "OFF"; b.BackgroundColor3=prefs[key] and P.dark or P.bg
  end,prefs[key])
  b.BackgroundColor3=prefs[key] and P.dark or P.bg
@@ -169,7 +170,7 @@ local historyPanel=newPanel("HISTORY")
 label(historyPanel,"HISTORY",UDim2.new(1,-12,0,25),UDim2.fromOffset(7,5),12,Color3.fromRGB(240,248,255),Enum.Font.GothamBold)
 label(historyPanel,"Newest first • current session • up to 40 entries",UDim2.new(1,-12,0,22),UDim2.fromOffset(7,30),7,P.muted)
 local historyList=create("Frame",{Position=UDim2.fromOffset(7,57),Size=UDim2.new(1,-14,0,285),BackgroundTransparency=1},historyPanel)
-local function refreshHistory()
+refreshHistory=function()
  if not historyList or not historyList.Parent then return end
  for _,c in ipairs(historyList:GetChildren()) do c:Destroy() end
  for i,item in ipairs(history) do
