@@ -118,6 +118,8 @@ local function saveSettings()
 end
 loadSettings()
 local currentCode = ""
+local historyItems = {}
+local historyRefresh
 
 local function make(className, props, parent)
  local obj = Instance.new(className)
@@ -239,19 +241,38 @@ text(rail, "ARCTIC", UDim2.new(1,0,0,18), UDim2.fromOffset(0,7), 7, C.MUTED, tru
 local content
 local settingsPanel
 local testerPanel
+local historyPanel
+local sequencePanel
+local function hideExtraPanels()
+ if settingsPanel then settingsPanel.Visible = false end
+ if testerPanel then testerPanel.Visible = false end
+ if historyPanel then historyPanel.Visible = false end
+ if sequencePanel then sequencePanel.Visible = false end
+end
 button(rail, "MAIN", UDim2.new(1,-8,0,28), UDim2.fromOffset(4,31), function()
  if content then content.Visible = true end
- if settingsPanel then settingsPanel.Visible = false end
- if testerPanel then testerPanel.Visible = false end
+ hideExtraPanels()
 end, C.BLUE_DARK).TextSize = 7
 button(rail, "TESTER", UDim2.new(1,-8,0,28), UDim2.fromOffset(4,64), function()
- if testerPanel then testerPanel.Visible = not testerPanel.Visible end
- if settingsPanel then settingsPanel.Visible = false end
+ local show = testerPanel and not testerPanel.Visible
+ hideExtraPanels()
+ if testerPanel then testerPanel.Visible = show end
 end, C.ROW).TextSize = 6
 button(rail, "SETTINGS", UDim2.new(1,-8,0,28), UDim2.fromOffset(4,97), function()
- if settingsPanel then settingsPanel.Visible = not settingsPanel.Visible end
- if testerPanel then testerPanel.Visible = false end
+ local show = settingsPanel and not settingsPanel.Visible
+ hideExtraPanels()
+ if settingsPanel then settingsPanel.Visible = show end
 end, C.ROW).TextSize = 6
+button(rail, "HISTORY", UDim2.new(1,-8,0,28), UDim2.fromOffset(4,130), function()
+ local show = historyPanel and not historyPanel.Visible
+ hideExtraPanels()
+ if historyPanel then historyPanel.Visible = show end
+end, C.ROW).TextSize = 6
+button(rail, "SEQUENCE", UDim2.new(1,-8,0,28), UDim2.fromOffset(4,163), function()
+ local show = sequencePanel and not sequencePanel.Visible
+ hideExtraPanels()
+ if sequencePanel then sequencePanel.Visible = show end
+end, C.ROW).TextSize = 5
 text(rail, "❄", UDim2.new(1,0,0,20), UDim2.new(0,0,1,-24), 12, C.BLUE, true)
 
 content = make("ScrollingFrame", {Name = "MainContent", Position = UDim2.fromOffset(69,49), Size = UDim2.new(1,-77,1,-56), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = C.BLUE, CanvasSize = UDim2.new(0,0,0,390), ScrollingDirection = Enum.ScrollingDirection.Y, Active = true}, main)
@@ -274,6 +295,7 @@ local codeLabel = make("TextBox", {
 }, codeCard)
 codeLabel.FocusLost:Connect(function()
  currentCode = codeLabel.Text
+ if currentCode ~= "" and currentCode ~= "waiting..." and historyRefresh then historyRefresh(currentCode, "Manual code") end
 end)
 local codeHint = text(codeCard, "Local preview • no live game connection", UDim2.new(1,-100,0,13), UDim2.fromOffset(9,45), 7, C.MUTED)
 button(codeCard, "RESET", UDim2.fromOffset(52,21), UDim2.new(1,-61,0,8), function()
@@ -358,6 +380,7 @@ button(bottom, "SCAN TEXT", UDim2.new(.32,0,1,0), UDim2.new(.68,4,0,0), function
  end
  currentCode = table.concat(pieces, "")
  codeLabel.Text = currentCode
+ if historyRefresh then historyRefresh(currentCode, "Scanned text") end
  codeHint.Text = "Scanned supplied text • verify the result"
  codeHint.TextColor3 = C.GREEN
 end, C.BLUE_DARK)
@@ -458,6 +481,116 @@ local testerBackButton = button(testerPanel, "BACK TO MAIN", UDim2.new(1,-20,0,2
  testerPanel.Visible = false
 end, C.ROW)
 testerBackButton.ZIndex = 21
+
+
+-- History panel: keeps recent codes in this session, newest first.
+historyPanel = make("Frame", {
+ Name = "HistoryPanel", Position = UDim2.fromOffset(0,0), Size = UDim2.fromScale(1,1),
+ BackgroundColor3 = C.BG, BorderSizePixel = 0, Visible = false, ZIndex = 20
+}, content)
+corner(historyPanel, 9); outline(historyPanel, C.BORDER, 1.2)
+text(historyPanel, "HISTORY", UDim2.new(1,-20,0,26), UDim2.fromOffset(10,8), 12, C.WHITE, false, Enum.Font.GothamBold).ZIndex = 21
+text(historyPanel, "Recent codes • newest first • this session only", UDim2.new(1,-20,0,20), UDim2.fromOffset(10,35), 7, C.MUTED).ZIndex = 21
+local historyList = make("ScrollingFrame", {
+ Name = "HistoryList", Position = UDim2.fromOffset(10,60), Size = UDim2.new(1,-20,1,-108),
+ BackgroundColor3 = C.PANEL, BorderSizePixel = 0, ScrollBarThickness = 3,
+ ScrollBarImageColor3 = C.BLUE, CanvasSize = UDim2.new(0,0,0,0), ZIndex = 21
+}, historyPanel)
+corner(historyList, 7); outline(historyList)
+local historyLayout = make("UIListLayout", {Padding = UDim.new(0,5), SortOrder = Enum.SortOrder.LayoutOrder}, historyList)
+historyLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+ historyList.CanvasSize = UDim2.new(0,0,0,historyLayout.AbsoluteContentSize.Y + 8)
+end)
+historyRefresh = function(code, source)
+ if not code or code == "" or code == "waiting..." then return end
+ table.insert(historyItems, 1, {code = tostring(code), source = source or "Code", time = os.date("%I:%M:%S %p")})
+ while #historyItems > 40 do table.remove(historyItems) end
+ for _, child in ipairs(historyList:GetChildren()) do
+  if child:IsA("Frame") then child:Destroy() end
+ end
+ for i, item in ipairs(historyItems) do
+  local entry = make("Frame", {
+   Size = UDim2.new(1,-8,0,42), BackgroundColor3 = C.ROW, BorderSizePixel = 0,
+   LayoutOrder = i, ZIndex = 22
+  }, historyList)
+  corner(entry, 6); outline(entry)
+  text(entry, item.code, UDim2.new(1,-12,0,18), UDim2.fromOffset(6,2), 10, C.WHITE, false, Enum.Font.GothamBold).ZIndex = 23
+  text(entry, item.source.." • "..item.time, UDim2.new(1,-12,0,14), UDim2.fromOffset(6,22), 7, C.MUTED).ZIndex = 23
+ end
+end
+local clearHistoryButton = button(historyPanel, "CLEAR HISTORY", UDim2.new(.48,0,0,28), UDim2.fromOffset(10,0), function()
+ historyItems = {}
+ for _, child in ipairs(historyList:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
+end, C.ROW)
+clearHistoryButton.Position = UDim2.new(0,10,1,-38); clearHistoryButton.ZIndex = 22
+local historyBack = button(historyPanel, "BACK", UDim2.new(.42,0,0,28), UDim2.new(.58,-10,1,-38), function()
+ historyPanel.Visible = false
+end, C.BLUE_DARK)
+historyBack.ZIndex = 22
+
+-- Sequence panel: local-only timed text preview, up to five parts.
+sequencePanel = make("Frame", {
+ Name = "SequencePanel", Position = UDim2.fromOffset(0,0), Size = UDim2.fromScale(1,1),
+ BackgroundColor3 = C.BG, BorderSizePixel = 0, Visible = false, ZIndex = 20
+}, content)
+corner(sequencePanel, 9); outline(sequencePanel, C.BORDER, 1.2)
+text(sequencePanel, "SEQUENCE MODE", UDim2.new(1,-20,0,26), UDim2.fromOffset(10,8), 12, C.WHITE, false, Enum.Font.GothamBold).ZIndex = 21
+text(sequencePanel, "Up to 5 announcement parts • 2 seconds apart", UDim2.new(1,-20,0,22), UDim2.fromOffset(10,35), 7, C.MUTED).ZIndex = 21
+local sequenceBoxes = {}
+for i = 1, 5 do
+ local partLabel = text(sequencePanel, "PART "..i, UDim2.fromOffset(42,25), UDim2.fromOffset(10,62+(i-1)*43), 7, C.BLUE, false, Enum.Font.GothamBold)
+ partLabel.ZIndex = 22
+ local partBox = make("TextBox", {
+  Name = "SequencePart"..i, Position = UDim2.fromOffset(53,62+(i-1)*43),
+  Size = UDim2.new(1,-63,0,27), BackgroundColor3 = C.ROW, BorderSizePixel = 0,
+  ClearTextOnFocus = false, Text = "", PlaceholderText = "Optional message part "..i,
+  TextColor3 = C.WHITE, PlaceholderColor3 = C.MUTED, TextSize = 8,
+  Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left,
+  TextWrapped = false, ZIndex = 22
+ }, sequencePanel)
+ corner(partBox, 6); outline(partBox)
+ table.insert(sequenceBoxes, partBox)
+end
+local sequenceStatus = text(sequencePanel, "READY • LOCAL PREVIEW ONLY", UDim2.new(1,-20,0,22), UDim2.fromOffset(10,282), 7, C.GREEN, true)
+sequenceStatus.ZIndex = 22
+local sequenceToken = 0
+local sequenceStart = button(sequencePanel, "START", UDim2.new(.31,-4,0,28), UDim2.fromOffset(10,310), function()
+ sequenceToken = sequenceToken + 1
+ local myToken = sequenceToken
+ local parts = {}
+ for _, box in ipairs(sequenceBoxes) do
+  local value = string.gsub(box.Text or "", "^%s*(.-)%s*$", "%1")
+  if value ~= "" then table.insert(parts, value) end
+ end
+ if #parts == 0 then sequenceStatus.Text = "ENTER AT LEAST ONE PART"; return end
+ task.spawn(function()
+  sequenceStatus.Text = "SEQUENCE RUNNING"
+  for i, value in ipairs(parts) do
+   if myToken ~= sequenceToken then return end
+   bannerOutline.Text = value; bannerBody.Text = value
+   bannerOutline.Visible = true; bannerBody.Visible = true
+   sequenceStatus.Text = "SHOWING PART "..i.." OF "..#parts
+   task.wait(2)
+  end
+  if myToken == sequenceToken then
+   bannerOutline.Visible = false; bannerBody.Visible = false
+   sequenceStatus.Text = "SEQUENCE COMPLETE"
+  end
+ end)
+end, C.BLUE_DARK)
+sequenceStart.ZIndex = 22
+local sequenceStop = button(sequencePanel, "STOP", UDim2.new(.31,-4,0,28), UDim2.new(.345,0,0,310), function()
+ sequenceToken = sequenceToken + 1
+ bannerOutline.Visible = false; bannerBody.Visible = false
+ sequenceStatus.Text = "SEQUENCE STOPPED"
+end, C.ROW)
+sequenceStop.ZIndex = 22
+local sequenceBack = button(sequencePanel, "BACK", UDim2.new(.31,-4,0,28), UDim2.new(.69,-1,0,310), function()
+ sequenceToken = sequenceToken + 1
+ sequencePanel.Visible = false
+ bannerOutline.Visible = false; bannerBody.Visible = false
+end, C.ROW)
+sequenceBack.ZIndex = 22
 
 -- Settings panel: themes, persistence, and update checker.
 settingsPanel = make("Frame", {
