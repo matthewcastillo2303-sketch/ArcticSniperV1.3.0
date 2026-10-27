@@ -80,6 +80,19 @@ local ok, startupError = pcall(function()
         ClipsDescendants=true, Active=true
     }, gui)
     round(main,13); stroke(main,accent,1.4)
+    -- Deep-blue glossy panel finish: subtle bevel, cool gradient, and a restrained top sheen.
+    make("UIGradient",{Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,Color3.fromRGB(17,38,59)),
+        ColorSequenceKeypoint.new(0.42,Color3.fromRGB(7,17,29)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(3,8,15))
+    }),Rotation=90},main)
+    local panelSheen = make("Frame",{Name="PanelSheen",Position=UDim2.fromOffset(1,1),Size=UDim2.new(1,-2,0,2),BackgroundColor3=Color3.fromRGB(170,225,255),BackgroundTransparency=0.68,BorderSizePixel=0,ZIndex=3},main)
+    round(panelSheen,2)
+    make("UIGradient",{Transparency=NumberSequence.new({
+        NumberSequenceKeypoint.new(0,0.05),
+        NumberSequenceKeypoint.new(0.5,0.72),
+        NumberSequenceKeypoint.new(1,1)
+    }),Rotation=0},panelSheen)
     uiScale = make("UIScale",{Scale=1},main)
     local function resize()
         local camera = workspace.CurrentCamera
@@ -96,8 +109,12 @@ local ok, startupError = pcall(function()
     -- Halloween intro with a short, non-blocking progress sequence.
     local intro = make("Frame",{Name="Intro",Size=UDim2.fromScale(1,1),BackgroundColor3=bg,BorderSizePixel=0,ZIndex=100},gui)
     local introLogo = make("Frame",{Size=UDim2.fromOffset(70,70),Position=UDim2.new(0.5,-35,0.31,0),BackgroundColor3=accentDark,BorderSizePixel=0,ZIndex=101},intro)
-    round(introLogo,18); stroke(introLogo,accent,2)
-    label(introLogo,"A",UDim2.fromScale(1,1),UDim2.new(),40,accent,true,Enum.Font.GothamBlack).ZIndex=102
+    round(introLogo,18); stroke(introLogo,accent,1.5)
+    make("UIGradient",{Color=ColorSequence.new(Color3.fromRGB(24,67,101),Color3.fromRGB(4,16,31)),Rotation=90},introLogo)
+    local introLogoShine=make("Frame",{Position=UDim2.new(0,5,0,4),Size=UDim2.new(1,-10,0,2),BackgroundColor3=Color3.fromRGB(198,232,255),BackgroundTransparency=0.45,BorderSizePixel=0,ZIndex=102},introLogo)
+    round(introLogoShine,2)
+    local introLetter=label(introLogo,"A",UDim2.fromScale(1,1),UDim2.new(),40,Color3.fromRGB(222,242,255),true,Enum.Font.GothamBlack)
+    introLetter.ZIndex=103
     label(intro,"ARCTIC SNIPER",UDim2.new(1,-24,0,28),UDim2.new(0,12,0.51,0),17,white,true,Enum.Font.GothamBlack).ZIndex=101
     local introStatus = label(intro,"INITIALIZING...",UDim2.new(1,-24,0,20),UDim2.new(0,12,0.58,0),8,muted,true)
     introStatus.ZIndex=101
@@ -110,9 +127,18 @@ local ok, startupError = pcall(function()
 
     -- Header and draggable main window.
     local header = make("Frame",{Size=UDim2.new(1,0,0,44),BackgroundColor3=panelColor,BorderSizePixel=0,Active=true},main)
-    local logo = make("Frame",{Size=UDim2.fromOffset(28,28),Position=UDim2.fromOffset(9,8),BackgroundColor3=accentDark,BorderSizePixel=0},header)
-    round(logo,8); stroke(logo,accent,1)
-    local logoLetter = label(logo,"A",UDim2.fromScale(1,1),UDim2.new(),17,accent,true,Enum.Font.GothamBlack)
+    make("UIGradient",{Color=ColorSequence.new(Color3.fromRGB(20,45,69),Color3.fromRGB(7,17,29)),Rotation=90},header)
+    local logo = make("Frame",{Size=UDim2.fromOffset(30,30),Position=UDim2.fromOffset(8,7),BackgroundColor3=Color3.fromRGB(9,29,49),BorderSizePixel=0},header)
+    round(logo,8); stroke(logo,Color3.fromRGB(103,174,220),1)
+    make("UIGradient",{Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,Color3.fromRGB(36,82,119)),
+        ColorSequenceKeypoint.new(0.48,Color3.fromRGB(13,39,65)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(4,15,28))
+    }),Rotation=90},logo)
+    local logoShine=make("Frame",{Position=UDim2.new(0,4,0,3),Size=UDim2.new(1,-8,0,2),BackgroundColor3=Color3.fromRGB(211,237,255),BackgroundTransparency=0.35,BorderSizePixel=0,ZIndex=2},logo)
+    round(logoShine,2)
+    local logoLetter = label(logo,"A",UDim2.fromScale(1,1),UDim2.new(),18,Color3.fromRGB(221,241,255),true,Enum.Font.GothamBlack)
+    logoLetter.ZIndex=3
     label(header,"ARCTIC SNIPER",UDim2.new(0,160,0,18),UDim2.fromOffset(45,5),11,white,false,Enum.Font.GothamBold)
     label(header,"FROST EDITION • v2.0.0",UDim2.new(0,170,0,13),UDim2.fromOffset(45,23),7,muted)
     local closeButton = button(header,"×",UDim2.fromOffset(24,24),UDim2.new(1,-30,0,9),function() gui:Destroy() end,accentDark)
@@ -354,7 +380,11 @@ local ok, startupError = pcall(function()
             TweenService:Create(main,TweenInfo.new(0.24,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=UDim2.fromOffset(340,430),Position=target,BackgroundTransparency=0}):Play()
         end
     end,accentDark)
-    mini.Visible=false; mini.TextSize=25; mini.Font=Enum.Font.GothamBlack; round(mini,14); stroke(mini,accent,1.6)
+    mini.Visible=false; mini.TextSize=25; mini.Font=Enum.Font.GothamBlack; round(mini,14); stroke(mini,Color3.fromRGB(103,174,220),1.5)
+    mini.TextColor3=Color3.fromRGB(221,241,255)
+    make("UIGradient",{Color=ColorSequence.new(Color3.fromRGB(36,82,119),Color3.fromRGB(4,15,28)),Rotation=90},mini)
+    local miniSheen=make("Frame",{Position=UDim2.new(0,7,0,5),Size=UDim2.new(1,-14,0,2),BackgroundColor3=Color3.fromRGB(211,237,255),BackgroundTransparency=0.38,BorderSizePixel=0,ZIndex=3},mini)
+    round(miniSheen,2)
     local miniDragging, miniStart, miniPos, miniMoved=false,nil,nil,false
     mini.InputBegan:Connect(function(input)
         if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
