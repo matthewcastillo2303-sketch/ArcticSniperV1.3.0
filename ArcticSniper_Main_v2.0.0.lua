@@ -14,6 +14,13 @@ if previous then previous:Destroy() end
 
 local palettes = {
  BLUE={accent=Color3.fromRGB(80,190,255),dark=Color3.fromRGB(20,79,117),bg=Color3.fromRGB(5,12,22),panel=Color3.fromRGB(10,22,36),row=Color3.fromRGB(17,36,53),muted=Color3.fromRGB(140,170,190)},
+ PURPLE={accent=Color3.fromRGB(180,125,255),dark=Color3.fromRGB(76,45,130),bg=Color3.fromRGB(12,8,22),panel=Color3.fromRGB(25,16,43),row=Color3.fromRGB(39,26,62),muted=Color3.fromRGB(181,164,207)},
+ RED={accent=Color3.fromRGB(255,85,95),dark=Color3.fromRGB(130,30,40),bg=Color3.fromRGB(22,7,12),panel=Color3.fromRGB(42,13,20),row=Color3.fromRGB(61,22,30),muted=Color3.fromRGB(210,150,157)},
+ GREEN={accent=Color3.fromRGB(80,230,150),dark=Color3.fromRGB(24,105,70),bg=Color3.fromRGB(5,18,13),panel=Color3.fromRGB(12,34,24),row=Color3.fromRGB(20,51,36),muted=Color3.fromRGB(145,200,170)},
+ PINK={accent=Color3.fromRGB(255,120,195),dark=Color3.fromRGB(130,48,94),bg=Color3.fromRGB(23,8,18),panel=Color3.fromRGB(43,17,34),row=Color3.fromRGB(62,26,48),muted=Color3.fromRGB(214,158,190)},
+ ORANGE={accent=Color3.fromRGB(255,160,65),dark=Color3.fromRGB(135,68,20),bg=Color3.fromRGB(22,12,5),panel=Color3.fromRGB(42,24,10),row=Color3.fromRGB(61,36,17),muted=Color3.fromRGB(211,171,130)},
+ CYAN={accent=Color3.fromRGB(65,235,235),dark=Color3.fromRGB(15,105,112),bg=Color3.fromRGB(4,18,22),panel=Color3.fromRGB(9,34,40),row=Color3.fromRGB(15,52,60),muted=Color3.fromRGB(135,195,201)},
+ GOLD={accent=Color3.fromRGB(255,205,75),dark=Color3.fromRGB(130,95,25),bg=Color3.fromRGB(21,16,6),panel=Color3.fromRGB(40,31,12),row=Color3.fromRGB(59,46,19),muted=Color3.fromRGB(204,181,125)},
  HALLOWEEN={accent=Color3.fromRGB(255,137,43),dark=Color3.fromRGB(126,55,14),bg=Color3.fromRGB(20,10,7),panel=Color3.fromRGB(34,19,13),row=Color3.fromRGB(51,29,19),muted=Color3.fromRGB(201,155,121)},
  CHRISTMAS={accent=Color3.fromRGB(70,220,125),dark=Color3.fromRGB(145,28,42),bg=Color3.fromRGB(7,17,13),panel=Color3.fromRGB(13,31,22),row=Color3.fromRGB(22,48,35),muted=Color3.fromRGB(155,205,170)},
  THANKSGIVING={accent=Color3.fromRGB(220,132,49),dark=Color3.fromRGB(111,57,25),bg=Color3.fromRGB(20,13,8),panel=Color3.fromRGB(36,24,15),row=Color3.fromRGB(53,36,23),muted=Color3.fromRGB(205,164,120)},
@@ -49,6 +56,7 @@ end
 local function button(parent, title, size, pos, callback, accent)
  local b=create("TextButton",{Text=title,Size=size,Position=pos,BackgroundColor3=accent and P.dark or P.row,TextColor3=Color3.fromRGB(240,248,255),Font=Enum.Font.GothamSemibold,TextSize=9,BorderSizePixel=0,AutoButtonColor=true},parent)
  round(b,6); stroke(b)
+ b:SetAttribute("ArcticAccent",accent==true)
  b.Activated:Connect(function() if callback then callback() end end)
  return b
 end
@@ -217,24 +225,42 @@ local settings=newPanel("SETTINGS")
 label(settings,"SETTINGS & THEMES",UDim2.new(1,-12,0,25),UDim2.fromOffset(7,5),12,Color3.fromRGB(240,248,255),Enum.Font.GothamBold)
 label(settings,"Choose a theme",UDim2.new(1,-12,0,20),UDim2.fromOffset(7,30),8,P.muted)
 local themeButtons={}
-local themeInfo={{"BLUE","❄ BLUE"},{"HALLOWEEN","🎃 HALLOWEEN"},{"CHRISTMAS","🎄 CHRISTMAS"},{"THANKSGIVING","🦃 THANKSGIVING"},{"TACO","🌮 TACO RAIN"},{"SATURDAY","🎉 ADMIN SATURDAY"}}
+local themeInfo={{"BLUE","❄ BLUE"},{"PURPLE","PURPLE"},{"RED","RED"},{"GREEN","GREEN"},{"PINK","PINK"},{"ORANGE","ORANGE"},{"CYAN","CYAN"},{"GOLD","GOLD"},{"HALLOWEEN","🎃 HALLOWEEN"},{"CHRISTMAS","🎄 CHRISTMAS"},{"THANKSGIVING","🦃 THANKSGIVING"},{"TACO","🌮 TACO RAIN"},{"SATURDAY","🎉 ADMIN SATURDAY"}}
 local function applyTheme(name)
- theme=palettes[name] and name or "BLUE"; P=palettes[theme]
- main.BackgroundColor3=P.bg; header.BackgroundColor3=P.panel; rail.BackgroundColor3=P.panel; content.BackgroundColor3=P.bg
+ theme=palettes[name] and name or "BLUE"
+ P=palettes[theme]
+ main.BackgroundColor3=P.bg
+ header.BackgroundColor3=P.panel
+ rail.BackgroundColor3=P.panel
+ content.BackgroundColor3=P.bg
  for _,obj in ipairs(gui:GetDescendants()) do
-  if obj:IsA("TextLabel") and obj.TextColor3~=Color3.fromRGB(240,248,255) and obj.TextColor3~=Color3.new(1,1,1) then obj.TextColor3=P.muted end
-  if obj:IsA("UIStroke") then obj.Color=P.accent end
+  if obj:IsA("Frame") or obj:IsA("ScrollingFrame") then
+   if obj==main then obj.BackgroundColor3=P.bg
+   elseif obj==header or obj==rail or obj.Name=="TEST" or obj.Name=="HISTORY" or obj.Name=="SEQUENCE" or obj.Name=="SETTINGS" or obj==codeCard then obj.BackgroundColor3=P.panel
+   elseif obj.BackgroundTransparency<1 then obj.BackgroundColor3=P.row end
+  elseif obj:IsA("TextButton") then
+   obj.BackgroundColor3=(obj:GetAttribute("ArcticAccent")==true) and P.dark or P.row
+  elseif obj:IsA("TextBox") then
+   obj.BackgroundColor3=P.row
+   obj.PlaceholderColor3=P.muted
+  elseif obj:IsA("TextLabel") then
+   if obj.TextColor3~=Color3.fromRGB(240,248,255) and obj.TextColor3~=Color3.new(1,1,1) then obj.TextColor3=P.muted end
+  elseif obj:IsA("UIStroke") then
+   obj.Color=P.accent
+  end
  end
- for name2,b in pairs(themeButtons) do b.BackgroundColor3=(name2==theme) and P.dark or P.row end
+ for name2,b in pairs(themeButtons) do
+  b.BackgroundColor3=(name2==theme) and P.dark or P.row
+ end
 end
 for i,item in ipairs(themeInfo) do
  local col=(i-1)%2; local row=math.floor((i-1)/2)
  local b=button(settings,item[2],UDim2.new(.5,-11,0,37),UDim2.new(col*.5,7,0,57+row*45),function() applyTheme(item[1]) end,i==1)
  b.TextSize=8; themeButtons[item[1]]=b
 end
-label(settings,"SPAM REDEEM / AUTO SCOPE / HIDE USER are UI preferences only.",UDim2.new(1,-14,0,40),UDim2.fromOffset(7,202),7,P.muted)
-label(settings,"This build does not redeem codes or automate another game.",UDim2.new(1,-14,0,35),UDim2.fromOffset(7,242),7,P.muted)
-button(settings,"BACK TO MAIN",UDim2.new(1,-14,0,30),UDim2.fromOffset(7,285),function() showPanel("MAIN") end,true)
+label(settings,"SPAM REDEEM / AUTO SCOPE / HIDE USER are UI preferences only.",UDim2.new(1,-14,0,40),UDim2.fromOffset(7,340),7,P.muted)
+label(settings,"This build does not redeem codes or automate another game.",UDim2.new(1,-14,0,35),UDim2.fromOffset(7,378),7,P.muted)
+button(settings,"BACK TO MAIN",UDim2.new(1,-14,0,30),UDim2.fromOffset(7,420),function() showPanel("MAIN") end,true)
 -- Draggable floating reopen button
 mini=button(gui,"❄ AS",UDim2.fromOffset(66,32),UDim2.new(0,12,.5,-16),function() main.Visible=true; mini.Visible=false end,true)
 mini.Visible=false
@@ -251,4 +277,4 @@ end)
 UIS.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then miniDrag=false end end)
 button(header,"—",UDim2.fromOffset(22,22),UDim2.new(1,-55,0,9),function() main.Visible=false; mini.Visible=true end)
 showPanel("MAIN")
-print("[Arctic Sniper] Clean rebuild loaded • v2.1.0")
+print("[Arctic Sniper] Rebuild loaded • v2.2.0 • 13 themes")
